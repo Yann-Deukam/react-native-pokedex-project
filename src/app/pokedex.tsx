@@ -3,7 +3,9 @@ import Card from '@/components/Card'
 import PokemonCard from '@/components/pokemon/PokemonCard'
 import Row from '@/components/Row'
 import SearchBar from '@/components/SearchBar'
+import SortButton from '@/components/SortButton'
 import ThemeText from '@/components/ThemeText'
+
 import { useMemo, useState } from 'react'
 import {
     ActivityIndicator,
@@ -12,39 +14,54 @@ import {
     StyleSheet,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+
 import { getPokemonIdFromUrl } from '../../functions/pokemon'
 import { useFetchQuery } from '../../hooks/useFetchQuery'
 import { useThemeColors } from '../../hooks/useThemeColors'
 
 const PAGE_SIZE = 21
 
-export default function pokedex() {
+export default function Pokedex() {
     const colors = useThemeColors()
 
-    // Fetch the complete Pokémon directory
+    // Fetch Pokémon directory
     const { data, isLoading, isError } = useFetchQuery(
         "/pokemon?limit=2000&offset=0"
     )
 
     const [search, setSearch] = useState("")
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+    const [sortKey, setSortKey] = useState<"id" | "name">("id")
 
-    // Filter Pokémon by name or ID
+    // Get Pokémon names and IDs
+    const pokemons = useMemo(() => {
+        return data?.results.map(pokemon => ({
+            name: pokemon.name,
+            id: getPokemonIdFromUrl(pokemon.url),
+        })) ?? []
+    }, [data])
+
+    // Filter and sort Pokémon
     const filteredPokemons = useMemo(() => {
         const normalizedSearch = search.trim().toLowerCase()
-        const pokemons = data?.results ?? []
 
-        if (!normalizedSearch) return pokemons
-
-        return pokemons.filter(pokemon => {
-            const id = getPokemonIdFromUrl(pokemon.url).toString()
+        const filtered = pokemons.filter(pokemon => {
+            if (!normalizedSearch) return true
 
             return (
                 pokemon.name.toLowerCase().includes(normalizedSearch) ||
-                id === normalizedSearch
+                pokemon.id.toString() === normalizedSearch
             )
         })
-    }, [data, search])
+
+        return [...filtered].sort((a, b) => {
+            if (sortKey === "id") {
+                return a.id - b.id
+            }
+
+            return a.name.localeCompare(b.name)
+        })
+    }, [pokemons, search, sortKey])
 
     // Display results in batches of 21
     const displayedPokemons = filteredPokemons.slice(0, visibleCount)
@@ -74,6 +91,7 @@ export default function pokedex() {
                     source={require('@/assets/images/pokeball.png')}
                     style={{ width: 24, height: 24 }}
                 />
+
                 <ThemeText variant="headline" color="grayLight">
                     Pokedex
                 </ThemeText>
@@ -87,6 +105,11 @@ export default function pokedex() {
                         setVisibleCount(PAGE_SIZE)
                     }}
                 />
+
+                <SortButton
+                    value={sortKey}
+                    onChange={setSortKey}
+                />
             </Row>
 
             <Card style={styles.body}>
@@ -95,10 +118,10 @@ export default function pokedex() {
                     numColumns={3}
                     contentContainerStyle={[styles.gridGap, styles.list]}
                     columnWrapperStyle={styles.gridGap}
-                    keyExtractor={item => item.url}
+                    keyExtractor={item => item.id.toString()}
                     renderItem={({ item }) => (
                         <PokemonCard
-                            id={getPokemonIdFromUrl(item.url)}
+                            id={item.id}
                             name={item.name}
                             style={{ flex: 1 }}
                         />
