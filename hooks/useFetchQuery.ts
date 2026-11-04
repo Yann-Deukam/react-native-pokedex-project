@@ -1,52 +1,65 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
+type Pokemon = {
+    name: string;
+    url: string;
+};
+
 type API = {
     "/pokemon?limit=21": {
-        count: number,
-        next: string | null,
-        results: {name: string, url: string}[]
+        count: number;
+        next: string | null;
+        results: Pokemon[];
+    };
+
+    "/pokemon?limit=2000&offset=0": {
+        count: number;
+        next: string | null;
+        results: Pokemon[];
+    };
+};
+
+const endpoint = "https://pokeapi.co/api/v2";
+
+async function fetchAPI<T>(url: string): Promise<T> {
+    const response = await fetch(url, {
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.status}`);
     }
+
+    return response.json() as Promise<T>;
 }
 
-const endpoint = "https://pokeapi.co/api/v2"
-export function useFetchQuery<T extends keyof API>(path: T){
+// Fetch a single page of data
+export function useFetchQuery<T extends keyof API>(path: T) {
     return useQuery({
         queryKey: [path],
         queryFn: async () => {
-            await wait(1) // Simulate network delay
-            // const res = await fetch(url)
-            // if(!res.ok) throw new Error("Failed to fetch data")
-            // return res.json()
-            return fetch(endpoint + path, {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            }). then(r => r.json() as Promise<API[T]>);
-        }
-    })
+            return fetchAPI<API[T]>(endpoint + path);
+        },
+        staleTime: 1000 * 60 * 60 * 24, // 24 hours
+    });
 }
 
-export function useInfiniteFetchQuery<T extends keyof API>(path: T){
+// Fetch paginated data
+export function useInfiniteFetchQuery<T extends keyof API>(path: T) {
     return useInfiniteQuery({
         queryKey: [path],
         initialPageParam: endpoint + path,
-        queryFn: async ({pageParam}) => {
-            await wait(1) // Simulate network delay
-            return fetch(pageParam, {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            }).then(r => r.json()as Promise<API[T]>);
-        },
-        getNextPageParam: (lastPage) => {
-                if("next" in lastPage) {
-                    return lastPage.next
-                }
-                return undefined
-        }
-    })
-}
 
-function wait (duration: number) {
-    return new Promise(resolve => setTimeout(resolve, duration * 1000))
+        queryFn: async ({ pageParam }) => {
+            return fetchAPI<API[T]>(pageParam);
+        },
+
+        getNextPageParam: (lastPage) => {
+            return lastPage.next ?? undefined;
+        },
+
+        staleTime: 1000 * 60 * 60 * 24, // 24 hours
+    });
 }
