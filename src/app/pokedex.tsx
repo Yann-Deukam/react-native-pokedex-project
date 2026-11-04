@@ -1,6 +1,7 @@
 import Card from '@/components/Card'
+import PokemonCard from '@/components/pokemon/PokemonCard'
 import ThemeText from '@/components/ThemeText'
-import { FlatList, Image, StyleSheet, Text, View } from 'react-native'
+import { FlatList, Image, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useThemeColors } from '../../hooks/useThemeColors'
 
@@ -22,9 +23,7 @@ export default function pokedex() {
             numColumns={3}
             contentContainerStyle={[styles.gridGap, styles.list]}
             columnWrapperStyle={styles.gridGap}
-            renderItem={({item}) => <Card style={{flex:1/3, height:200}}>
-            <Text>{item.name}</Text>
-        </Card>}  
+            renderItem={({item}) => <PokemonCard id={item.id} name={item.name} style={{flex:1/3}} />}  
             keyExtractor={item => item.id.toString()} />
       </Card>
     </SafeAreaView>
