@@ -35,6 +35,8 @@ type PokemonDetails = {
             name: keyof (typeof Colors)["type"]
         }
     }[]
+
+
 }
 
 type PaginatedResponse = {
@@ -43,12 +45,23 @@ type PaginatedResponse = {
     results: Pokemon[]
 }
 
+type PokemonDescription ={
+    flavor_text_entries:{
+        flavor_text: string,
+        language: {
+            name: string
+        }
+    }[]
+}
+
 type API = {
     '/pokemon?limit=21': PaginatedResponse
 
     '/pokemon?limit=2000&offset=0': PaginatedResponse
 
     '/pokemon/[id]': PokemonDetails
+
+    "/pokemon-species/[id]": PokemonDescription
 }
 
 type PaginatedPath =

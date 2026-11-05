@@ -1,5 +1,6 @@
 import { Link } from 'expo-router'
 import { Image, Pressable, StyleSheet, View, type ViewStyle } from 'react-native'
+import { getPokemonArtwork } from '../../../functions/pokemon'
 import { useThemeColors } from '../../../hooks/useThemeColors'
 import Card from '../Card'
 import ThemeText from '../ThemeText'
@@ -19,7 +20,7 @@ export default function PokemonCard({style, id, name}: PokemonCardProps) {
       <View style={[styles.shadow, { backgroundColor: colors.grayBackground }]} />
       <ThemeText style={styles.id} variant="caption" color="grayMedium">#{id.toString().padStart(3, '0')}</ThemeText>
       <Image 
-        source={{uri: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`}} 
+        source={{uri: getPokemonArtwork(id)}}
         width={72} 
         height={72} 
     />
