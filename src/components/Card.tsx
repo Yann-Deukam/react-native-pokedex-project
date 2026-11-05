@@ -7,7 +7,7 @@ type CardProps = ViewProps
 export default function Card({style, ...rest}: CardProps) {
     const  colors = useThemeColors()
   return (
-    <View style={[style, styles, {backgroundColor: colors.white}]}  {...rest} />
+    <View style={[styles, {backgroundColor: colors.white}, style]}  {...rest} />
   )
 }
 

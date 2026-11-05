@@ -98,7 +98,6 @@ export function useFetchQuery<T extends keyof API>(
     return useQuery({
         queryKey: [localUrl],
         queryFn: () => fetchAPI<API[T]>(localUrl),
-        staleTime: 1000 * 60 * 60 * 24,
     })
 }
 
@@ -116,7 +115,5 @@ export function useInfiniteFetchQuery<T extends PaginatedPath>(path: T) {
         getNextPageParam: lastPage => {
             return lastPage.next ?? undefined
         },
-
-        staleTime: 1000 * 60 * 60 * 24,
     })
 }
