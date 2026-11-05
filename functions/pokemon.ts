@@ -8,7 +8,7 @@ export function getPokemonArtwork(id:number | string):string{
 
 export function formatWeight(weight?:number){
     if(!weight){
-        return ""
+        return "--"
     }
 
     return (
@@ -18,7 +18,7 @@ export function formatWeight(weight?:number){
 
 export function formatSize(size?:number){
     if(!size){
-        return ""
+        return "--"
     }
 
     return (

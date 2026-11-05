@@ -24,7 +24,7 @@ export default function Pokemon () {
     ?.find(({language}) => language.name === "en")
     ?.flavor_text.replaceAll("\n",". ")
   return (
-    <RootView style={{ backgroundColor: colorType }}>
+    <RootView backgroundColor= {colorType} >
       <View>
         <Image source={require("@/assets/images/pokeball_bg.png")} style={styles.pokeball}/>
       <Row style={styles.header}>
@@ -49,7 +49,7 @@ export default function Pokemon () {
             height={200} 
           />
         <Card style={styles.card}>
-          <Row gap={8}>
+          <Row gap={8} style={{height: 20}}>
             {types.map(type => <PokemonType name={type.type.name} key={type.type.name}  />)}
           </Row>
           <ThemeText variant='subtitle1' style={{ color: colorType }}>About</ThemeText>
