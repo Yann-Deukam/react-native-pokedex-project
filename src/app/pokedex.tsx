@@ -13,8 +13,8 @@ import {
     Image,
     StyleSheet,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 
+import RootView from '@/components/RootView'
 import { getPokemonIdFromUrl } from '../../functions/pokemon'
 import { useFetchQuery } from '../../hooks/useFetchQuery'
 import { useThemeColors } from '../../hooks/useThemeColors'
@@ -68,24 +68,24 @@ export default function Pokedex() {
 
     if (isLoading) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.tint }]}>
+            <RootView>
                 <ActivityIndicator size="large" color={colors.grayLight} />
-            </SafeAreaView>
+            </RootView>
         )
     }
 
     if (isError) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.tint }]}>
+            <RootView>
                 <ThemeText color="grayLight">
                     Failed to load Pokémon.
                 </ThemeText>
-            </SafeAreaView>
+            </RootView>
         )
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.tint }]}>
+        <RootView>
             <Row style={styles.header} gap={12}>
                 <Image
                     source={require('@/assets/images/pokeball.png')}
@@ -144,15 +144,11 @@ export default function Pokedex() {
                     }
                 />
             </Card>
-        </SafeAreaView>
+        </RootView>
     )
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 4,
-    },
     header: {
         paddingHorizontal: 12,
         paddingVertical: 8,
