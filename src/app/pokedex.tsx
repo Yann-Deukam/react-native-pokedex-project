@@ -1,4 +1,3 @@
-
 import Card from '@/components/Card'
 import PokemonCard from '@/components/pokemon/PokemonCard'
 import Row from '@/components/Row'
@@ -24,7 +23,7 @@ const PAGE_SIZE = 21
 export default function Pokedex() {
     const colors = useThemeColors()
 
-    // Fetch Pokémon directory
+    // Fetch the full Pokémon directory (regular Pokémon and alternate forms)
     const { data, isLoading, isError } = useFetchQuery(
         "/pokemon?limit=2000&offset=0"
     )
@@ -35,10 +34,10 @@ export default function Pokedex() {
 
     // Get Pokémon names and IDs
     const pokemons = useMemo(() => {
-        return data?.results.map(pokemon => ({
+        return (data?.results ?? []).map(pokemon => ({
             name: pokemon.name,
             id: getPokemonIdFromUrl(pokemon.url),
-        })) ?? []
+        }))
     }, [data])
 
     // Filter and sort Pokémon

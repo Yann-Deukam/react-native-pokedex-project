@@ -12,6 +12,15 @@ type PokemonDetails = {
     weight: number
     height: number
 
+    sprites: {
+        front_default: string | null
+    }
+
+    species: {
+        name: string
+        url: string
+    }
+
     moves: {
         move: {
             name: string
@@ -31,7 +40,7 @@ type PokemonDetails = {
 
     types: {
         type: {
-            name: keyof (typeof Colors)["type"]
+            name: keyof (typeof Colors)['type']
         }
     }[]
 }
@@ -53,11 +62,8 @@ type PokemonDescription = {
 
 type API = {
     '/pokemon?limit=21': PaginatedResponse
-
     '/pokemon?limit=2000&offset=0': PaginatedResponse
-
     '/pokemon/[id]': PokemonDetails
-
     '/pokemon-species/[id]': PokemonDescription
 }
 
@@ -66,6 +72,8 @@ type PaginatedPath =
     | '/pokemon?limit=2000&offset=0'
 
 const endpoint = 'https://pokeapi.co/api/v2'
+
+const STALE_TIME = 5 * 60 * 1000
 
 async function fetchAPI<T>(url: string): Promise<T> {
     const response = await fetch(url, {
@@ -87,59 +95,63 @@ function buildUrl(path: string, params?: Record<string, string | number>) {
         endpoint +
         Object.entries(params ?? {}).reduce(
             (url, [key, value]) =>
-                url.replaceAll(`[${key}]`, encodeURIComponent(String(value))),
+                url.replaceAll(
+                    `[${key}]`,
+                    encodeURIComponent(String(value))
+                ),
             path
         )
     )
 }
 
-// Pokemon data never changes, so never treat it as stale. This also stops
-// a background refetch every time a page mounts.
-const STATIC_DATA_OPTIONS = { staleTime: Infinity }
-
-// Fetch a single page or individual Pokémon
 export function useFetchQuery<T extends keyof API>(
     path: T,
     params?: Record<string, string | number>
 ) {
-    const url = buildUrl(path as string, params)
+    const localUrl = buildUrl(path as string, params)
+
+    const hasValidParams = Object.values(params ?? {}).every(
+        value => String(value).length > 0
+    )
 
     return useQuery({
-        queryKey: [url],
-        queryFn: () => fetchAPI<API[T]>(url),
-        ...STATIC_DATA_OPTIONS,
+        queryKey: [localUrl],
+        queryFn: () => fetchAPI<API[T]>(localUrl),
+        enabled: hasValidParams,
+        staleTime: STALE_TIME,
     })
 }
 
-// Load data into the cache ahead of time, using the same key as useFetchQuery
-// so the screen renders instantly when it mounts.
+// Fetches into the cache ahead of time, using the same key as useFetchQuery,
+// and returns the data so callers can chain further requests from it.
 export function prefetchFetchQuery<T extends keyof API>(
     queryClient: QueryClient,
     path: T,
     params?: Record<string, string | number>
-) {
-    const url = buildUrl(path as string, params)
+): Promise<API[T]> {
+    const localUrl = buildUrl(path as string, params)
 
-    return queryClient.prefetchQuery({
-        queryKey: [url],
-        queryFn: () => fetchAPI<API[T]>(url),
-        ...STATIC_DATA_OPTIONS,
+    return queryClient.fetchQuery({
+        queryKey: [localUrl],
+        queryFn: () => fetchAPI<API[T]>(localUrl),
+        staleTime: STALE_TIME,
     })
 }
 
-// Fetch paginated data
-export function useInfiniteFetchQuery<T extends PaginatedPath>(path: T) {
+export function useInfiniteFetchQuery<T extends PaginatedPath>(
+    path: T
+) {
     return useInfiniteQuery({
         queryKey: [path],
 
         initialPageParam: endpoint + path,
 
-        queryFn: async ({ pageParam }) => {
+        queryFn: async ({ pageParam }): Promise<API[T]> => {
             return fetchAPI<API[T]>(pageParam)
         },
 
-        getNextPageParam: (lastPage) => {
-            return lastPage.next ?? undefined
-        },
+        getNextPageParam: lastPage => lastPage.next ?? undefined,
+
+        staleTime: STALE_TIME,
     })
 }

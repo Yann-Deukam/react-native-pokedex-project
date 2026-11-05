@@ -1,29 +1,36 @@
 export function getPokemonIdFromUrl(url: string): number {
-    return parseInt(url.split("/").at(-2)!,10)
+    return parseInt(url.split("/").at(-2)!, 10)
 }
 
-export function getPokemonArtwork(id:number | string):string{
-    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+export function getPokemonArtwork(id: number | string): string {
+    // Official artwork exists for Pokémon IDs up to 1010 (as of current PokeAPI data).
+    // For IDs beyond that, fall back to the regular sprite directory which has broader coverage.
+    const numericId = Number(id);
+    if (!isNaN(numericId) && numericId > 1010) {
+        // Fallback to default sprite.
+        return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${numericId}.png`;
+    }
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${numericId}.png`;
 }
 
-export function formatWeight(weight?:number){
-    if(!weight){
+export function formatWeight(weight?: number) {
+    if (!weight) {
         return "--"
     }
 
     return (
-        weight/10
-    ). toString().replace(".",",") + "kg"
+        weight / 10
+    ).toString().replace(".", ",") + "kg"
 }
 
-export function formatSize(size?:number){
-    if(!size){
+export function formatSize(size?: number) {
+    if (!size) {
         return "--"
     }
 
     return (
-        size/10
-    ). toString().replace(".",",") + "kg"
+        size / 10
+    ).toString().replace(".", ",") + "kg"
 }
 
 export function statShortName(name: string): string {
