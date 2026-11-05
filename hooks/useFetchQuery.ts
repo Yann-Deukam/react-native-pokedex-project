@@ -1,5 +1,4 @@
-
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { QueryClient, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Colors } from '../constants/color'
 
 type Pokemon = {
@@ -35,8 +34,6 @@ type PokemonDetails = {
             name: keyof (typeof Colors)["type"]
         }
     }[]
-
-
 }
 
 type PaginatedResponse = {
@@ -45,9 +42,9 @@ type PaginatedResponse = {
     results: Pokemon[]
 }
 
-type PokemonDescription ={
-    flavor_text_entries:{
-        flavor_text: string,
+type PokemonDescription = {
+    flavor_text_entries: {
+        flavor_text: string
         language: {
             name: string
         }
@@ -61,7 +58,7 @@ type API = {
 
     '/pokemon/[id]': PokemonDetails
 
-    "/pokemon-species/[id]": PokemonDescription
+    '/pokemon-species/[id]': PokemonDescription
 }
 
 type PaginatedPath =
@@ -84,20 +81,49 @@ async function fetchAPI<T>(url: string): Promise<T> {
     return response.json() as Promise<T>
 }
 
+// Builds the full URL, e.g. '/pokemon/[id]' + { id: 25 } -> '.../pokemon/25'
+function buildUrl(path: string, params?: Record<string, string | number>) {
+    return (
+        endpoint +
+        Object.entries(params ?? {}).reduce(
+            (url, [key, value]) =>
+                url.replaceAll(`[${key}]`, encodeURIComponent(String(value))),
+            path
+        )
+    )
+}
+
+// Pokemon data never changes, so never treat it as stale. This also stops
+// a background refetch every time a page mounts.
+const STATIC_DATA_OPTIONS = { staleTime: Infinity }
+
 // Fetch a single page or individual Pokémon
 export function useFetchQuery<T extends keyof API>(
     path: T,
     params?: Record<string, string | number>
 ) {
-    const localUrl = endpoint + Object.entries(params ?? {}).reduce(
-        (url, [key, value]) =>
-            url.replaceAll(`[${key}]`, encodeURIComponent(String(value))),
-        path as string
-    )
+    const url = buildUrl(path as string, params)
 
     return useQuery({
-        queryKey: [localUrl],
-        queryFn: () => fetchAPI<API[T]>(localUrl),
+        queryKey: [url],
+        queryFn: () => fetchAPI<API[T]>(url),
+        ...STATIC_DATA_OPTIONS,
+    })
+}
+
+// Load data into the cache ahead of time, using the same key as useFetchQuery
+// so the screen renders instantly when it mounts.
+export function prefetchFetchQuery<T extends keyof API>(
+    queryClient: QueryClient,
+    path: T,
+    params?: Record<string, string | number>
+) {
+    const url = buildUrl(path as string, params)
+
+    return queryClient.prefetchQuery({
+        queryKey: [url],
+        queryFn: () => fetchAPI<API[T]>(url),
+        ...STATIC_DATA_OPTIONS,
     })
 }
 
@@ -112,7 +138,7 @@ export function useInfiniteFetchQuery<T extends PaginatedPath>(path: T) {
             return fetchAPI<API[T]>(pageParam)
         },
 
-        getNextPageParam: lastPage => {
+        getNextPageParam: (lastPage) => {
             return lastPage.next ?? undefined
         },
     })
