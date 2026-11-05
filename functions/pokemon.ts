@@ -25,3 +25,13 @@ export function formatSize(size?:number){
         size/10
     ). toString().replace(".",",") + "kg"
 }
+
+export function statShortName(name: string): string {
+    return name
+        .replaceAll("special", "Sp/")
+        .replaceAll("-", "")
+        .replaceAll("attack", "ATK")
+        .replaceAll("defense", "DEF")
+        .replaceAll("speed", "SPD")
+        .toUpperCase()
+}
